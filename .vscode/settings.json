@@ -1,5 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "./euler_riemann_exact/python/"
+        "./euler_riemann_exact/python/",
+        "./burgers_exact/python/"
     ]
 }
