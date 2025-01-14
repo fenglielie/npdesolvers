@@ -39,7 +39,9 @@ def burgers_sin_exact_solver(x, t, a, b, w, phi, ep):
     u(x,t): exact solution of burgers equation when u0(x) = a + b sin(w x + phi)
     """
 
-    return a + b * burgers_sin_exact_solver_kernel(w * x + phi - a * w * t, b * w * t, ep)
+    return a + b * burgers_sin_exact_solver_kernel(
+        w * x + phi - a * w * t, b * w * t, ep
+    )
 
 
 def burgers_sin_shock(xleft, xright, t, a, b, w, phi):
