@@ -1,11 +1,10 @@
 # README
 
-包括：
 
-- Burgers方程的精确解
+- Exact solution of the Burgers' equation
   - Python
   - MATLAB
   - Cpp
-- Euler方程组Riemann问题的精确解
+- Exact solution of the Riemann problem for the Euler system
   - Python
   - MATLAB
