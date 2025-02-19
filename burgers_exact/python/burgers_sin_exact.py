@@ -1,9 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from typing import Callable, Tuple
 
 
-def burgers_sin_exact_solver_kernel(x, t, ep):
+def burgers_sin_exact_solver_kernel(x: np.ndarray, t: float, ep: float) -> np.ndarray:
     """
     u(x,t): exact solution of burgers equation when u0(x) = sin(x)
     """
@@ -34,7 +35,9 @@ def burgers_sin_exact_solver_kernel(x, t, ep):
     return u
 
 
-def burgers_sin_exact_solver(x, t, a, b, w, phi, ep):
+def burgers_sin_exact_solver(
+    x: np.ndarray, t: float, a: float, b: float, w: float, phi: float, ep: float
+) -> np.ndarray:
     """
     u(x,t): exact solution of burgers equation when u0(x) = a + b sin(w x + phi)
     """
@@ -44,7 +47,9 @@ def burgers_sin_exact_solver(x, t, a, b, w, phi, ep):
     )
 
 
-def burgers_sin_shock(xleft, xright, t, a, b, w, phi):
+def burgers_sin_shock(
+    xleft: float, xright: float, t: float, a: float, b: float, w: float, phi: float
+) -> Tuple[float, np.ndarray]:
     """
     Return the earliest time of shock wave appearance and shock positions.
 
@@ -66,7 +71,18 @@ def burgers_sin_shock(xleft, xright, t, a, b, w, phi):
     return tb, y
 
 
-def burgers_sin_show(xleft, xright, xnum, t, a, b, w, phi, ep, retFigure=False):
+def burgers_sin_show(
+    xleft: float,
+    xright: float,
+    xnum: int,
+    t: float,
+    a: float,
+    b: float,
+    w: float,
+    phi: float,
+    ep: float,
+    retFigure: bool = False,
+):
     x = np.linspace(xleft, xright, xnum)
     u = burgers_sin_exact_solver(x, t, a, b, w, phi, ep)
 
@@ -94,7 +110,13 @@ def burgers_sin_show(xleft, xright, xnum, t, a, b, w, phi, ep, retFigure=False):
         return fig, axes
 
 
-def burgers_show_line(u0, xleft, xright, num, tend):
+def burgers_show_line(
+    u0: Callable[[np.ndarray], np.ndarray],
+    xleft: float,
+    xright: float,
+    num: int,
+    tend: float,
+):
     xi_list = np.linspace(xleft, xright, num)
     x_list = np.zeros(num)
     u_list = np.zeros(num)
@@ -117,7 +139,13 @@ def burgers_show_line(u0, xleft, xright, num, tend):
     axes.plot(x_list, u_list, "r")
 
 
-def burgers_show_animate(u0, xleft, xright, num, tend):
+def burgers_show_animate(
+    u0: Callable[[np.ndarray], np.ndarray],
+    xleft: float,
+    xright: float,
+    num: int,
+    tend: float,
+) -> animation.FuncAnimation:
     xi_lists = np.linspace(xleft, xright, num)
     u_lists = u0(xi_lists)
     time_N = 100
