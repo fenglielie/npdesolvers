@@ -2,13 +2,23 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as opt
 import matplotlib.animation as animation
-from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+from typing import Optional, Tuple, Dict
 
 
 def euler_riemann_exact_solver(
-    rho_l, u_l, p_l, rho_r, u_r, p_r, gamma=1.4, xlist=None, x_c=0.0, t=None
-):
-
+    *,
+    rho_l: float,
+    u_l: float,
+    p_l: float,
+    rho_r: float,
+    u_r: float,
+    p_r: float,
+    gamma: float = 1.4,
+    xlist: Optional[np.ndarray] = None,
+    x_c: float = 0.0,
+    t: Optional[float] = None,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Dict[str, float]]:
     # Calculate sound speed in left and right states
     c_l = np.sqrt(gamma * p_l / rho_l)
     c_r = np.sqrt(gamma * p_r / rho_r)
@@ -19,31 +29,29 @@ def euler_riemann_exact_solver(
 
     # Check for cavitation (solution for cavitation not supported)
     if u_l - u_r + 2 * (c_l + c_r) / (gamma - 1.0) < 0:
-        print("Cavitation detected!  Exiting.")
-        return None
+        raise ValueError("Cavitation detected!  Exiting.")
 
     # Define integral curves and Hugoniot locus for 1-wave and 3-wave
-
-    def integral_curve_1(p):
+    def integral_curve_1(p: float) -> float:
         return u_l + 2 * c_l / (gamma - 1.0) * (1.0 - (p / p_l) ** beta)
 
-    def integral_curve_3(p):
+    def integral_curve_3(p: float) -> float:
         return u_r - 2 * c_r / (gamma - 1.0) * (1.0 - (p / p_r) ** beta)
 
-    def hugoniot_locus_1(p):
+    def hugoniot_locus_1(p: float) -> float:
         return u_l + 2 * c_l / np.sqrt(2 * gamma * (gamma - 1.0)) * (
             (1 - p / p_l) / np.sqrt(1 + alpha * p / p_l)
         )
 
-    def hugoniot_locus_3(p):
+    def hugoniot_locus_3(p: float) -> float:
         return u_r - 2 * c_r / np.sqrt(2 * gamma * (gamma - 1.0)) * (
             (1 - p / p_r) / np.sqrt(1 + alpha * p / p_r)
         )
 
-    def phi_l(p):
+    def phi_l(p: float) -> float:
         return hugoniot_locus_1(p) if p >= p_l else integral_curve_1(p)
 
-    def phi_r(p):
+    def phi_r(p: float) -> float:
         return hugoniot_locus_3(p) if p >= p_r else integral_curve_3(p)
 
     # Construct the intersection equation in the (p-v) plane
@@ -116,7 +124,7 @@ def euler_riemann_exact_solver(
         print("Warning: wave is out of range.")
 
     # Solve for the state inside the rarefaction wave
-    xi = (xlist - x_c) / t
+    xi = (xlist - x_c) / t  # type: ignore
     u_1_fan = ((gamma - 1.0) * u_l + 2 * (c_l + xi)) / (gamma + 1.0)
     u_3_fan = ((gamma - 1.0) * u_r - 2 * (c_r - xi)) / (gamma + 1.0)
     rho_1_fan = (rho_l**gamma * (u_1_fan - xi) ** 2 / (gamma * p_l)) ** (
@@ -177,25 +185,26 @@ def euler_riemann_exact_solver(
 
 
 def euler_riemann_exact_plot(
-    rho_l,
-    u_l,
-    p_l,
-    rho_r,
-    u_r,
-    p_r,
-    x_l,
-    x_r,
-    t,
-    x_c=0.0,
+    *,
+    rho_l: float,
+    u_l: float,
+    p_l: float,
+    rho_r: float,
+    u_r: float,
+    p_r: float,
+    x_l: float,
+    x_r: float,
+    t: float,
+    x_c: float = 0.0,
 ):
     xlist = np.linspace(x_l, x_r, 1000)
     rho, u, p, more_info = euler_riemann_exact_solver(
-        rho_l,
-        u_l,
-        p_l,
-        rho_r,
-        u_r,
-        p_r,
+        rho_l=rho_l,
+        u_l=u_l,
+        p_l=p_l,
+        rho_r=rho_r,
+        u_r=u_r,
+        p_r=p_r,
         xlist=xlist,
         x_c=x_c,
         t=t,
@@ -276,7 +285,18 @@ def euler_riemann_exact_plot(
     return fig, ax
 
 
-def euler_riemann_density_plot(rho_l, u_l, p_l, rho_r, u_r, p_r, x_l, x_r, t, x_c=0.0):
+def euler_riemann_density_plot(
+    rho_l: float,
+    u_l: float,
+    p_l: float,
+    rho_r: float,
+    u_r: float,
+    p_r: float,
+    x_l: float,
+    x_r: float,
+    t: float,
+    x_c: float = 0.0,
+):
     time_N = 100
     time_dt = t / time_N
     xlist = np.linspace(x_l, x_r, 800)
@@ -294,10 +314,24 @@ def euler_riemann_density_plot(rho_l, u_l, p_l, rho_r, u_r, p_r, x_l, x_r, t, x_
     time_text = ax.text(0.02, 0.9, "", transform=ax.transAxes)
 
     rho = np.where(xlist < x_c, rho_l, rho_r)
+    rho_1, _, _, _ = euler_riemann_exact_solver(
+        rho_l=rho_l,
+        u_l=u_l,
+        p_l=p_l,
+        rho_r=rho_r,
+        u_r=u_r,
+        p_r=p_r,
+        xlist=xlist,
+        x_c=x_c,
+        t=10*time_dt,
+    )
+    norm = Normalize(vmin=np.min(rho_1), vmax=np.max(rho_1))
     density_matrix = np.tile(rho, (4, 1))
-    cax = ax.imshow(density_matrix, aspect="auto", cmap=cmap, extent=(x_l, x_r, 0, 1))
-    cbar = fig.colorbar(cax, ax=ax, orientation="vertical")
-    cbar.set_label("Density")
+
+    cax = ax.imshow(
+        density_matrix, aspect="auto", cmap=cmap, extent=(x_l, x_r, 0, 1), norm=norm
+    )
+    fig.colorbar(cax, ax=ax, orientation="vertical")
 
     def update(frame):
         t_now = frame * time_dt
@@ -305,17 +339,16 @@ def euler_riemann_density_plot(rho_l, u_l, p_l, rho_r, u_r, p_r, x_l, x_r, t, x_
             rho = np.where(xlist < x_c, rho_l, rho_r)
         else:
             rho, _, _, _ = euler_riemann_exact_solver(
-                rho_l,
-                u_l,
-                p_l,
-                rho_r,
-                u_r,
-                p_r,
+                rho_l=rho_l,
+                u_l=u_l,
+                p_l=p_l,
+                rho_r=rho_r,
+                u_r=u_r,
+                p_r=p_r,
                 xlist=xlist,
                 x_c=x_c,
                 t=t_now,
             )
-
         density_matrix = np.tile(rho, (30, 1))
         cax.set_data(density_matrix)
         time_text.set_text(f"T={t_now:.2g}")
